@@ -1,6 +1,6 @@
 # Java Compiled files
 *.class
-*.jar
+# *.jar
 *.war
 *.ear
 
