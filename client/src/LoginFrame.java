@@ -2,6 +2,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import model.Message;
+import model.User;
+import network.ClientSocketManager;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -22,6 +24,7 @@ public class LoginFrame extends JFrame {
     private final JTextField usernameField;
     private final JPasswordField passwordField;
     private final JButton loginButton;
+    private final JButton registerButton;
     private final Gson gson;
     private ClientSocketManager socketManager;
 
@@ -31,11 +34,13 @@ public class LoginFrame extends JFrame {
         this.usernameField = new JTextField(20);
         this.passwordField = new JPasswordField(20);
         this.loginButton = new JButton("Đăng nhập");
+        this.registerButton = new JButton("Đăng ký");
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
         buildLayout();
         loginButton.addActionListener(event -> login());
+        registerButton.addActionListener(event -> openRegisterFrame());
         pack();
         setLocationRelativeTo(null);
     }
@@ -61,10 +66,16 @@ public class LoginFrame extends JFrame {
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(loginButton);
+        buttonPanel.add(registerButton);
 
         setLayout(new BorderLayout());
         add(formPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    private void openRegisterFrame() {
+        RegisterFrame frame = new RegisterFrame();
+        frame.setVisible(true);
     }
 
     private void login() {
@@ -93,7 +104,14 @@ public class LoginFrame extends JFrame {
                 try {
                     Message response = get();
                     if (response != null && "LOGIN_RESPONSE".equals(response.getAction()) && hasData(response)) {
+                        User user = gson.fromJson(gson.toJsonTree(response.getData()), User.class);
                         JOptionPane.showMessageDialog(LoginFrame.this, "Đăng nhập thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                        
+                        MainFrame mainFrame = new MainFrame(user, socketManager);
+                        mainFrame.setVisible(true);
+                        
+                        socketManager = null; // Prevent socket from being closed on dispose
+                        dispose();
                     } else {
                         JOptionPane.showMessageDialog(LoginFrame.this, "Tên đăng nhập hoặc mật khẩu không đúng.", "Đăng nhập thất bại", JOptionPane.ERROR_MESSAGE);
                     }
@@ -118,6 +136,7 @@ public class LoginFrame extends JFrame {
         usernameField.setEnabled(enabled);
         passwordField.setEnabled(enabled);
         loginButton.setEnabled(enabled);
+        registerButton.setEnabled(enabled);
     }
 
     @Override
